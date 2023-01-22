@@ -86,8 +86,12 @@ var sw = Stopwatch.StartNew();
 //Input21.Run();
 //System.Console.WriteLine();
 
-System.Console.WriteLine("Day 22");
-Input22.Run();
+//System.Console.WriteLine("Day 22");
+//Input22.Run();
+//System.Console.WriteLine();
+
+System.Console.WriteLine("Day 23");
+Input23.Run();
 System.Console.WriteLine();
 
 sw.Stop();
