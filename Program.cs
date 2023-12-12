@@ -74,9 +74,9 @@ var sw = Stopwatch.StartNew();
 //Input18.Run();
 //System.Console.WriteLine();
 
-//System.Console.WriteLine("Day 19");
-//Input19.Run();
-//System.Console.WriteLine();
+System.Console.WriteLine("Day 19");
+Input19.Run();
+System.Console.WriteLine();
 
 //System.Console.WriteLine("Day 20");
 //Input20.Run();
@@ -94,9 +94,9 @@ var sw = Stopwatch.StartNew();
 //Input23.Run();
 //System.Console.WriteLine();
 
-System.Console.WriteLine("Day 25");
-Input25.Run();
-System.Console.WriteLine();
+//System.Console.WriteLine("Day 25");
+//Input25.Run();
+//System.Console.WriteLine();
 
 sw.Stop();
 

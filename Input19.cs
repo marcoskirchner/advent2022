@@ -26,7 +26,10 @@ internal class Input19
     internal static void Run()
     {
         var lines = File.ReadAllLines("..\\..\\..\\input19.txt");
-        var input = ReadInput(lines).Take(2);
+        var input = ReadInput(lines)
+            .Take(2)
+            //.Skip(2)
+            ;
         RunPart1(input);
         RunPart2(input);
     }
@@ -95,39 +98,48 @@ internal class Input19
     private static void RunPart1(IEnumerable<Blueprint> input)
     {
         var sum = 0;
-        Parallel.ForEach(input, new ParallelOptions() { MaxDegreeOfParallelism = 4 }, blueprint =>
+        foreach (var blueprint in input)
         {
             var n = MaxNumberOfGeodes(blueprint, 24);
             sum += blueprint.ID * n;
-            Console.WriteLine(blueprint.ID + " - " + n);
-        });
+        }
         Console.WriteLine(sum);
     }
 
     private static void RunPart2(IEnumerable<Blueprint> input)
     {
         var product = 1;
-        Parallel.ForEach(input.Take(3), new ParallelOptions() { MaxDegreeOfParallelism = 4 }, blueprint =>
+        foreach (var blueprint in input.Take(3))
         {
             var n = MaxNumberOfGeodes(blueprint, 32);
             product *= n;
-            Console.WriteLine(blueprint.ID + " - " + n);
-        });
+        };
         Console.WriteLine(product);
     }
 
+
+    private static readonly Dictionary<(int, int, int), int> _calls = new(5000000);
+    private static int _maxOre = 0;
+    private static int _maxClay = 0;
+    private static Blueprint _bp;
+
     static int MaxNumberOfGeodes(Blueprint bp, int minutes)
     {
-        var maxOre = new[]
+        _calls.Clear();
+        _maxOre = new[]
         {
-                OreValue(bp.OreRobotCost),
-                OreValue(bp.ClayRobotCost),
-                OreValue(bp.ObsidianRobotCost),
-                OreValue(bp.GeodeRobotCost),
-            }.Max();
-        return MaxGeodes(minutes, 0, FromOre(1));
+            OreValue(bp.ClayRobotCost),
+            OreValue(bp.ObsidianRobotCost),
+            OreValue(bp.GeodeRobotCost),
+        }.Max();
+        _maxClay = ClayValue(bp.ObsidianRobotCost);
+        _bp = bp;
 
-        int MaxGeodes(int minutesLeft, int resources, int robots)
+        var ret = MaxGeodes(minutes, 0, FromOre(1));
+
+        return ret;
+
+        static int MaxGeodes(int minutesLeft, int resources, int robots)
         {
             int localMax;
             int maxSoFar = GeodeValue(resources);
@@ -135,41 +147,46 @@ internal class Input19
                 return maxSoFar;
             minutesLeft--;
 
+            if (_calls.TryGetValue((minutesLeft, resources, robots), out maxSoFar))
+            {
+                return maxSoFar;
+            }
+
             var newResourcesValue = resources + robots;
 
-            if (OreValue(resources) >= OreValue(bp.OreRobotCost) && OreValue(robots) < maxOre)
+            if (OreValue(resources) >= OreValue(_bp.OreRobotCost) && OreValue(robots) < _maxOre)
             {
                 localMax = MaxGeodes(minutesLeft,
-                    newResourcesValue - bp.OreRobotCost,
+                    newResourcesValue - _bp.OreRobotCost,
                     robots + NEW_ORE_ROBOT);
                 if (localMax > maxSoFar)
                     maxSoFar = localMax;
             }
-            if (OreValue(resources) >= OreValue(bp.ClayRobotCost) && ClayValue(robots) < ClayValue(bp.ObsidianRobotCost))
+            if (OreValue(resources) >= OreValue(_bp.ClayRobotCost) && ClayValue(robots) < _maxClay)
             {
                 localMax = MaxGeodes(minutesLeft,
-                    newResourcesValue - bp.ClayRobotCost,
+                    newResourcesValue - _bp.ClayRobotCost,
                     robots + NEW_CLAY_ROBOT);
                 if (localMax > maxSoFar)
                     maxSoFar = localMax;
             }
 
-            if (OreValue(resources) >= OreValue(bp.ObsidianRobotCost)
-                && ClayValue(resources) >= ClayValue(bp.ObsidianRobotCost)
-                && ObsidianValue(robots) < ObsidianValue(bp.GeodeRobotCost))
+            if (OreValue(resources) >= OreValue(_bp.GeodeRobotCost)
+                && ObsidianValue(resources) >= ObsidianValue(_bp.GeodeRobotCost))
             {
                 localMax = MaxGeodes(minutesLeft,
-                    newResourcesValue - bp.ObsidianRobotCost,
-                    robots + NEW_OBSIDIAN_ROBOT);
+                    newResourcesValue - _bp.GeodeRobotCost,
+                    robots + NEW_GEODE_ROBOT);
                 if (localMax > maxSoFar)
                     maxSoFar = localMax;
             }
-            if (OreValue(resources) >= OreValue(bp.GeodeRobotCost)
-                && ObsidianValue(resources) >= ObsidianValue(bp.GeodeRobotCost))
+            else if (OreValue(resources) >= OreValue(_bp.ObsidianRobotCost)
+                && ClayValue(resources) >= ClayValue(_bp.ObsidianRobotCost)
+                && ObsidianValue(robots) < ObsidianValue(_bp.GeodeRobotCost))
             {
                 localMax = MaxGeodes(minutesLeft,
-                    newResourcesValue - bp.GeodeRobotCost,
-                    robots + NEW_GEODE_ROBOT);
+                    newResourcesValue - _bp.ObsidianRobotCost,
+                    robots + NEW_OBSIDIAN_ROBOT);
                 if (localMax > maxSoFar)
                     maxSoFar = localMax;
             }
@@ -178,6 +195,7 @@ internal class Input19
             if (localMax > maxSoFar)
                 maxSoFar = localMax;
 
+            _calls.Add((minutesLeft, resources, robots), maxSoFar);
             return maxSoFar;
         }
     }
